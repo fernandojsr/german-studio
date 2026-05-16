@@ -59,7 +59,7 @@ function cleanWord(wordComplete) {
 async function loadData() {
     console.log('🔄 Loading data...');
     try {
-        const response = await fetch('../datos/german words.csv');
+        const response = await fetch('./datos/german words.csv');
         if (!response.ok) throw new Error('CSV not found');
         const csvText = await response.text();
         palabras = parseCSV(csvText);
