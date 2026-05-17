@@ -105,7 +105,8 @@ window.addEventListener('DOMContentLoaded', () => {
 async function loadData() {
     console.log('🔄 Loading data...');
     try {
-        const response = await fetch('./datos/german words.csv');
+        const response = await fetch('../datos/german words.csv');
+//      const response = await fetch('./datos/german words.csv'); // Para usar en GITHUB Pages (descomenta esta línea y comenta la anterior)
         if (!response.ok) throw new Error('CSV not found');
         const csvText = await response.text();
         palabras = parseCSV(csvText);
@@ -551,35 +552,154 @@ function updateHangman() {
     else if (hangmanWrong.length >= 6) document.getElementById('hangmanMessage').innerHTML = `💀 You lost. The word was: ${hangmanWord.toUpperCase()}`;
 }
 function generateWordSearch() {
-    const available = palabrasFiltradas.slice(0, 8);
-    wordsearchWords = available.map(p => p.word.toUpperCase());
-    wordsearchFound = new Array(wordsearchWords.length).fill(false);
-    const size = 12;
-    wordsearchGrid = Array(size).fill().map(() => Array(size).fill(''));
-    const dirs = [[0,1],[1,0],[1,1],[1,-1],[0,-1],[-1,0],[-1,-1],[-1,1]];
-    wordsearchWords.forEach(word => {
-        for (let attempt = 0; attempt < 100; attempt++) {
-            const dir = Math.floor(Math.random() * 8);
-            const row = Math.floor(Math.random() * size);
-            const col = Math.floor(Math.random() * size);
-            let ok = true;
-            for (let i = 0; i < word.length; i++) {
-                const r = row + dirs[dir][0] * i, c = col + dirs[dir][1] * i;
-                if (r < 0 || r >= size || c < 0 || c >= size || (wordsearchGrid[r][c] && wordsearchGrid[r][c] !== word[i])) { ok = false; break; }
-            }
-            if (ok) { for (let i = 0; i < word.length; i++) wordsearchGrid[row + dirs[dir][0] * i][col + dirs[dir][1] * i] = word[i]; break; }
-        }
+    // Obtener palabras disponibles
+    let availableWords = [...palabrasFiltradas];
+    
+    if (availableWords.length < 6) {
+        availableWords = [...palabras];
+    }
+    
+    // Mezclar palabras
+    for (let i = availableWords.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [availableWords[i], availableWords[j]] = [availableWords[j], availableWords[i]];
+    }
+    
+    // Seleccionar entre 6 y 10 palabras
+    const wordCount = Math.min(Math.max(6, Math.floor(Math.random() * 8) + 4), availableWords.length);
+    const selectedWords = availableWords.slice(0, wordCount);
+    
+    wordsearchWords = selectedWords.map(p => {
+        let word = p.word.toUpperCase();
+        // Reemplazar caracteres especiales
+        word = word.replace(/Ä/g, 'AE').replace(/Ö/g, 'OE').replace(/Ü/g, 'UE').replace(/ß/g, 'SS');
+        return word;
     });
+    
+    // Filtrar palabras duplicadas y cortas
+    wordsearchWords = [...new Set(wordsearchWords)].filter(w => w.length >= 3);
+    
+    if (wordsearchWords.length === 0) {
+        wordsearchWords = ['HUND', 'KATZE', 'PFERD', 'VOGEL', 'FISCH', 'MAUS', 'BAER'];
+    }
+    
+    wordsearchFound = new Array(wordsearchWords.length).fill(false);
+    
+    // TAMAÑO DE GRID: 15x15 para que quepan todas las palabras
+    const size = 15;
+    wordsearchGrid = Array(size).fill().map(() => Array(size).fill(''));
+    
+    const dirs = [[0,1],[1,0],[1,1],[1,-1],[0,-1],[-1,0],[-1,-1],[-1,1]];
+    
+    // Colocar palabras (más intentos para asegurar que todas quepan)
+    for (let idx = 0; idx < wordsearchWords.length; idx++) {
+        const word = wordsearchWords[idx];
+        let placed = false;
+        let attempts = 0;
+        
+        while (!placed && attempts < 500) {
+            const dir = Math.floor(Math.random() * 8);
+            const dr = dirs[dir][0];
+            const dc = dirs[dir][1];
+            
+            // Calcular rango válido para la palabra
+            let maxRow = size - 1;
+            let maxCol = size - 1;
+            let minRow = 0;
+            let minCol = 0;
+            
+            if (dr > 0) maxRow = size - word.length;
+            if (dr < 0) minRow = word.length - 1;
+            if (dc > 0) maxCol = size - word.length;
+            if (dc < 0) minCol = word.length - 1;
+            
+            if (minRow > maxRow || minCol > maxCol) {
+                attempts++;
+                continue;
+            }
+            
+            const row = Math.floor(Math.random() * (maxRow - minRow + 1)) + minRow;
+            const col = Math.floor(Math.random() * (maxCol - minCol + 1)) + minCol;
+            
+            // Verificar que todas las posiciones estén libres
+            let valid = true;
+            for (let i = 0; i < word.length; i++) {
+                const r = row + dr * i;
+                const c = col + dc * i;
+                if (wordsearchGrid[r][c] !== '' && wordsearchGrid[r][c] !== word[i]) {
+                    valid = false;
+                    break;
+                }
+            }
+            
+            if (valid) {
+                for (let i = 0; i < word.length; i++) {
+                    const r = row + dr * i;
+                    const c = col + dc * i;
+                    wordsearchGrid[r][c] = word[i];
+                }
+                placed = true;
+                console.log(`✅ Palabra colocada: ${word} en posición (${row},${col}) dir ${dir}`);
+            }
+            attempts++;
+        }
+        
+        if (!placed) {
+            console.warn(`⚠️ No se pudo colocar la palabra: ${word}`);
+        }
+    }
+    
+    // Rellenar espacios vacíos con letras aleatorias
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) if (!wordsearchGrid[i][j]) wordsearchGrid[i][j] = letters[Math.floor(Math.random() * letters.length)];
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            if (!wordsearchGrid[i][j]) {
+                wordsearchGrid[i][j] = letters[Math.floor(Math.random() * letters.length)];
+            }
+        }
+    }
+    
     displayWordSearch();
+    
+    // Mostrar en consola cuántas palabras se colocaron
+    console.log(`📊 Total palabras en el juego: ${wordsearchWords.length}`);
 }
 function displayWordSearch() {
     const gridDiv = document.getElementById('wordsearchGrid');
+    if (!gridDiv) return;
+    
     gridDiv.innerHTML = '';
-    for (let i = 0; i < wordsearchGrid.length; i++) for (let j = 0; j < wordsearchGrid[i].length; j++) { const cell = document.createElement('div'); cell.className = 'ws-cell'; cell.textContent = wordsearchGrid[i][j]; cell.onclick = () => selectWordSearchCell(i, j); gridDiv.appendChild(cell); }
-    document.getElementById('wordsearchWords').innerHTML = '<h4>📝 Words to find:</h4>' + wordsearchWords.map((w, i) => `<span class="ws-word ${wordsearchFound[i] ? 'found' : ''}">${w}</span>`).join('');
+    
+    // Ajustar CSS grid dinámicamente según el tamaño
+    const size = wordsearchGrid.length;
+    gridDiv.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+    
+    // Mostrar grid
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            const cell = document.createElement('div');
+            cell.className = 'ws-cell';
+            cell.textContent = wordsearchGrid[i][j];
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+            cell.onclick = () => selectWordSearchCell(i, j);
+            gridDiv.appendChild(cell);
+        }
+    }
+    
+    // Mostrar palabras a buscar
+    const wordsDiv = document.getElementById('wordsearchWords');
+    if (wordsDiv) {
+        wordsDiv.innerHTML = '<h4>📝 Words to find:</h4>';
+        wordsearchWords.forEach((word, idx) => {
+            const span = document.createElement('span');
+            span.className = `ws-word ${wordsearchFound[idx] ? 'found' : ''}`;
+            span.textContent = word;
+            wordsDiv.appendChild(span);
+        });
+    }
 }
+
 function selectWordSearchCell(row, col) {
     if (!seleccionInicio) { seleccionInicio = { row, col }; document.querySelectorAll('.ws-cell').forEach(c => c.classList.remove('selected')); document.querySelector(`.ws-cell[data-row='${row}'][data-col='${col}']`).classList.add('selected'); }
     else { checkWordSearchWord(seleccionInicio.row, seleccionInicio.col, row, col); seleccionInicio = null; document.querySelectorAll('.ws-cell').forEach(c => c.classList.remove('selected')); }
