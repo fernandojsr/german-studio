@@ -105,8 +105,8 @@ window.addEventListener('DOMContentLoaded', () => {
 async function loadData() {
     console.log('🔄 Loading data...');
     try {
-//      const response = await fetch('../datos/german words.csv');  // Para usar en VS CODE (descomenta esta línea y comenta la siguiente)
-        const response = await fetch('./datos/german words.csv');
+        const response = await fetch('../datos/german words.csv');
+//      const response = await fetch('./datos/german words.csv'); // Para usar en GITHUB Pages (descomenta esta línea y comenta la anterior)
         if (!response.ok) throw new Error('CSV not found');
         const csvText = await response.text();
         palabras = parseCSV(csvText);
@@ -344,44 +344,37 @@ if (exampleContainer && word.example && word.example !== '—' && word.example !
     exampleGermanElem.innerHTML = '';
     exampleGermanElem.style.display = 'flex';
     exampleGermanElem.style.alignItems = 'center';
-    exampleGermanElem.style.justifyContent = 'center';
-    exampleGermanElem.style.position = 'relative';
+    exampleGermanElem.style.justifyContent = 'space-between';  // Texto izquierda, icono derecha
+    exampleGermanElem.style.gap = '12px';
     exampleGermanElem.style.cursor = 'pointer';
-    exampleGermanElem.style.padding = '8px 12px';
+    exampleGermanElem.style.padding = '8px 16px';
     exampleGermanElem.style.borderRadius = '12px';
+    exampleGermanElem.style.width = '100%';
     
-    // Texto del ejemplo (centrado)
+    // Texto del ejemplo (izquierda)
     const textSpan = document.createElement('span');
     textSpan.textContent = `🇩🇪 ${word.example.substring(0, 100)}`;
-    textSpan.style.textAlign = 'center';
     textSpan.style.flex = '1';
+    textSpan.style.textAlign = 'center';
     
-    // Icono de audio (posicionado a la derecha)
+    // Icono de audio (derecha)
     const audioIcon = document.createElement('i');
     audioIcon.className = 'fas fa-volume-up';
-    audioIcon.style.fontSize = '1rem';
+    audioIcon.style.fontSize = '1.1rem';
     audioIcon.style.cursor = 'pointer';
-    audioIcon.style.position = 'absolute';
-    audioIcon.style.right = '12px';
-    audioIcon.style.top = '50%';
-    audioIcon.style.transform = 'translateY(-50%)';
+    audioIcon.style.flexShrink = '0';
+    audioIcon.style.color = 'var(--primary)';
     
     exampleGermanElem.appendChild(textSpan);
     exampleGermanElem.appendChild(audioIcon);
     
-    // Clic en la bocina reproduce el audio
-    audioIcon.onclick = (e) => {
+    // Clic en TODO el elemento reproduce el audio
+    exampleGermanElem.onclick = (e) => {
         e.stopPropagation();
         speak(word.example);
     };
     
-    // Opcional: también hacer clic en el texto
-    textSpan.onclick = (e) => {
-        e.stopPropagation();
-        speak(word.example);
-    };
-    
-    // Hover effect
+    // Estilo hover
     exampleGermanElem.onmouseenter = () => {
         exampleGermanElem.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
     };

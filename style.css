@@ -1297,12 +1297,13 @@ button:hover i {
 #cardExampleAleman {
     transition: all 0.2s ease;
     border-radius: 12px;
-    padding: 8px 12px;
+    padding: 8px 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #cardExampleAleman:hover {
-    background: rgba(0, 0, 0, 0.05);
-    transform: scale(1.01);
+    background: rgba(0, 0, 0, 0.04);
 }
 
 #cardExampleAleman i {
@@ -1311,7 +1312,6 @@ button:hover i {
 
 #cardExampleAleman:hover i {
     transform: scale(1.1);
-    opacity: 1;
 }
 
 /* ========== GRÁFICO CIRCULAR ========== */
