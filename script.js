@@ -9,6 +9,7 @@ let quizQuestions = [];
 let quizCurrentIndex = 0;
 let quizScore = 0;
 let datosCargados = false;
+let progressChart = null;
 
 // Game variables
 let hangmanWord = '', hangmanGuessed = [], hangmanWrong = [], hangmanMaxWrong = 6, hangmanTraduccion = '', hangmanTema = '';
@@ -56,10 +57,55 @@ function cleanWord(wordComplete) {
     return wordComplete;
 }
 
+// ========== MODAL DE BIENVENIDA - Aparece en cada recarga ==========
+function initWelcomeModal() {
+    const modal = document.getElementById('welcomeModal');
+    const closeBtn = document.getElementById('closeWelcomeBtn');
+    
+    // Siempre mostrar el modal al cargar/recargar la página
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+    
+    // Cerrar con el botón - CON ANIMACIÓN
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            modal.style.animation = 'fadeOut 0.2s ease';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.style.animation = '';
+            }, 200);
+        };
+    }
+    
+    // Cerrar haciendo clic fuera del modal
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.style.animation = 'fadeOut 0.2s ease';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    modal.style.animation = '';
+                }, 200);
+            }
+        };
+    }
+}
+
+// Inicializar el modal cuando el DOM esté listo
+window.addEventListener('DOMContentLoaded', () => {
+    initWelcomeModal();
+});
+
+// Llamar al modal después de que cargue la página
+window.addEventListener('DOMContentLoaded', () => {
+    initWelcomeModal();
+});
+
 async function loadData() {
     console.log('🔄 Loading data...');
     try {
-        const response = await fetch('./datos/german words.csv');
+        const response = await fetch('../datos/german words.csv');
         if (!response.ok) throw new Error('CSV not found');
         const csvText = await response.text();
         palabras = parseCSV(csvText);
@@ -68,7 +114,10 @@ async function loadData() {
     
     palabrasFiltradas = [...palabras];
     document.getElementById('totalWords').textContent = palabras.length;
-    loadProgress(); loadFavorites(); updateStreak(); updateStats();
+    loadProgress(); loadFavorites(); updateStreak(); 
+    loadTopics(); 
+    initProgressChart();  
+    updateStats();
     loadTopics(); updateFlashcard(); searchDictionary();
     datosCargados = true; fillTopicDatalist();
 }
@@ -125,28 +174,129 @@ function updateStats() {
     const progressFill = document.getElementById('progressFill');
     if (progressFill) progressFill.style.width = `${percent}%`;
     document.getElementById('progressPercent').textContent = `${percent}%`;
+    
+    updateProgressChart();  // ← AGREGAR ESTA LÍNEA
+}
+
+// ========== GRÁFICO CIRCULAR DE PROGRESO ==========
+function initProgressChart() {
+    const ctx = document.getElementById('progressChart')?.getContext('2d');
+    if (!ctx) return;
+    
+    // Destruir gráfico anterior si existe
+    if (progressChart) {
+        progressChart.destroy();
+    }
+    
+    const studied = studiedWords.size;
+    const total = palabras.length;
+    const percent = total ? (studied / total * 100).toFixed(1) : 0;
+    
+    progressChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [studied, total - studied],
+                backgroundColor: ['#1A5D9C', '#E2E8F0'],
+                borderWidth: 0,
+                borderRadius: 10,
+                spacing: 2,
+                cutout: '70%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: { enabled: false },
+                legend: { display: false }
+            }
+        }
+    });
+    
+    // Actualizar texto del porcentaje
+    const chartPercentage = document.getElementById('chartPercentage');
+    if (chartPercentage) chartPercentage.textContent = percent;
+}
+
+function updateProgressChart() {
+    if (!progressChart) {
+        initProgressChart();
+        return;
+    }
+    
+    const studied = studiedWords.size;
+    const total = palabras.length;
+    const percent = total ? (studied / total * 100).toFixed(1) : 0;
+    
+    progressChart.data.datasets[0].data = [studied, total - studied];
+    progressChart.update();
+    
+    const chartPercentage = document.getElementById('chartPercentage');
+    if (chartPercentage) chartPercentage.textContent = percent;
 }
 
 function loadTopics() {
     const topics = {};
     palabras.forEach(p => { topics[p.topic] = (topics[p.topic] || 0) + 1; });
+    
+    // Calcular palabras estudiadas por tema
+    const studiedByTopic = {};
+    studiedWords.forEach(id => {
+        const palabra = palabras.find(p => p.id === id);
+        if (palabra) {
+            studiedByTopic[palabra.topic] = (studiedByTopic[palabra.topic] || 0) + 1;
+        }
+    });
+    
     const topicList = document.getElementById('topicList');
     if (!topicList) return;
     topicList.innerHTML = '';
+    
+    // Opción "Todos" con progreso total
     const allTopic = document.createElement('div');
     allTopic.className = 'topic-item active';
-    allTopic.innerHTML = `📚 All <span class="topic-count">${palabras.length}</span>`;
+    const totalStudied = studiedWords.size;
+    const totalWords = palabras.length;
+    const totalPercent = totalWords ? Math.round((totalStudied / totalWords) * 100) : 0;
+    allTopic.innerHTML = `
+        <div style="display: flex; flex-direction: column; width: 100%;">
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <span>📚 All</span>
+                <span class="topic-count">${totalStudied}/${totalWords}</span>
+            </div>
+            <div class="topic-progress-bar" style="margin-top: 4px;">
+                <div class="topic-progress-fill" style="width: ${totalPercent}%;"></div>
+            </div>
+        </div>
+    `;
     allTopic.onclick = () => filterByTopic(null);
     topicList.appendChild(allTopic);
+    
+    // Temas individuales con barra de progreso
     const sortedTopics = Object.keys(topics).sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
     sortedTopics.forEach(topic => {
-        const count = topics[topic];
+        const total = topics[topic];
+        const studied = studiedByTopic[topic] || 0;
+        const percent = total ? Math.round((studied / total) * 100) : 0;
+        
         const topicItem = document.createElement('div');
         topicItem.className = 'topic-item';
-        topicItem.innerHTML = `${topic} <span class="topic-count">${count}</span>`;
+        topicItem.innerHTML = `
+            <div style="display: flex; flex-direction: column; width: 100%;">
+                <div style="display: flex; justify-content: space-between; width: 100%;">
+                    <span>${topic}</span>
+                    <span class="topic-count">${studied}/${total}</span>
+                </div>
+                <div class="topic-progress-bar" style="margin-top: 4px;">
+                    <div class="topic-progress-fill" style="width: ${percent}%;"></div>
+                </div>
+            </div>
+        `;
         topicItem.onclick = () => filterByTopic(topic);
         topicList.appendChild(topicItem);
     });
+    
     const dictFilter = document.getElementById('dictTopicFilter');
     if (dictFilter) {
         dictFilter.innerHTML = '<option value="">All topics</option>';
@@ -183,14 +333,73 @@ function updateFlashcard() {
     if (backTopic) { backTopic.textContent = word.topic; backTopic.style.background = topicColor; }
     document.getElementById('cardTranslation').textContent = word.translation;
     
-    const exampleContainer = document.getElementById('cardExampleContainer');
-    const exampleGermanElem = document.getElementById('cardExampleAleman');
-    const exampleEnElem = document.getElementById('cardExampleIngles');
-    if (exampleContainer && word.example && word.example !== '—') {
-        exampleGermanElem.textContent = `🇩🇪 ${word.example.substring(0, 100)}`;
-        exampleEnElem.textContent = word.exampleEn ? `🇬🇧 ${word.exampleEn.substring(0, 100)}` : '';
-        exampleContainer.style.display = 'block';
-    } else { exampleContainer.style.display = 'none'; }
+// Ejemplos con audio (texto centrado, bocina a la derecha)
+const exampleContainer = document.getElementById('cardExampleContainer');
+const exampleGermanElem = document.getElementById('cardExampleAleman');
+const exampleEnElem = document.getElementById('cardExampleIngles');
+
+if (exampleContainer && word.example && word.example !== '—' && word.example !== 'null' && word.example.trim() !== '') {
+    // Limpiar contenido anterior
+    exampleGermanElem.innerHTML = '';
+    exampleGermanElem.style.display = 'flex';
+    exampleGermanElem.style.alignItems = 'center';
+    exampleGermanElem.style.justifyContent = 'center';
+    exampleGermanElem.style.position = 'relative';
+    exampleGermanElem.style.cursor = 'pointer';
+    exampleGermanElem.style.padding = '8px 12px';
+    exampleGermanElem.style.borderRadius = '12px';
+    
+    // Texto del ejemplo (centrado)
+    const textSpan = document.createElement('span');
+    textSpan.textContent = `🇩🇪 ${word.example.substring(0, 100)}`;
+    textSpan.style.textAlign = 'center';
+    textSpan.style.flex = '1';
+    
+    // Icono de audio (posicionado a la derecha)
+    const audioIcon = document.createElement('i');
+    audioIcon.className = 'fas fa-volume-up';
+    audioIcon.style.fontSize = '1rem';
+    audioIcon.style.cursor = 'pointer';
+    audioIcon.style.position = 'absolute';
+    audioIcon.style.right = '12px';
+    audioIcon.style.top = '50%';
+    audioIcon.style.transform = 'translateY(-50%)';
+    
+    exampleGermanElem.appendChild(textSpan);
+    exampleGermanElem.appendChild(audioIcon);
+    
+    // Clic en la bocina reproduce el audio
+    audioIcon.onclick = (e) => {
+        e.stopPropagation();
+        speak(word.example);
+    };
+    
+    // Opcional: también hacer clic en el texto
+    textSpan.onclick = (e) => {
+        e.stopPropagation();
+        speak(word.example);
+    };
+    
+    // Hover effect
+    exampleGermanElem.onmouseenter = () => {
+        exampleGermanElem.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
+    };
+    exampleGermanElem.onmouseleave = () => {
+        exampleGermanElem.style.backgroundColor = 'transparent';
+    };
+    
+    // Ejemplo en inglés
+    if (word.exampleEn && word.exampleEn !== '—' && word.exampleEn !== 'null') {
+        exampleEnElem.textContent = `🇬🇧 ${word.exampleEn.substring(0, 100)}`;
+        exampleEnElem.style.display = 'block';
+    } else {
+        exampleEnElem.style.display = 'none';
+    }
+    
+    exampleContainer.style.display = 'block';
+} else {
+    exampleContainer.style.display = 'none';
+}
     
     const pluralElem = document.getElementById('cardPlural');
     if (pluralElem && word.plural && word.plural !== '—') {
@@ -227,7 +436,13 @@ function updateFlashcard() {
 function nextCard() { currentIndex = (currentIndex + 1) % palabrasFiltradas.length; updateFlashcard(); }
 function prevCard() { currentIndex = (currentIndex - 1 + palabrasFiltradas.length) % palabrasFiltradas.length; updateFlashcard(); }
 function shuffleWords() { for (let i = palabrasFiltradas.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [palabrasFiltradas[i], palabrasFiltradas[j]] = [palabrasFiltradas[j], palabrasFiltradas[i]]; } shuffled = true; currentIndex = 0; updateFlashcard(); }
-function markEasy() { studiedWords.add(palabrasFiltradas[currentIndex].id); saveProgress(); nextCard(); }
+function markEasy() { 
+    studiedWords.add(palabrasFiltradas[currentIndex].id); 
+    saveProgress(); 
+    loadTopics();
+    updateProgressChart();  // ← AGREGAR ESTA LÍNEA
+    nextCard(); 
+}
 function markHard() { nextCard(); }
 
 function startQuiz() { if (!datosCargados && palabras.length === 0) { setTimeout(startQuiz, 100); return; } const quizWords = palabrasFiltradas.length > 0 ? [...palabrasFiltradas] : [...palabras]; quizQuestions = quizWords.sort(() => Math.random() - 0.5).slice(0, 10); quizCurrentIndex = 0; quizScore = 0; updateQuiz(); }
@@ -277,6 +492,7 @@ function deleteWord(id) {
         studiedWords.delete(id); favoriteWords.delete(id);
         document.getElementById('totalWords').textContent = palabras.length;
         saveProgress(); saveFavorites(); updateStats(); loadTopics();
+        updateProgressChart();  // ← AGREGAR ESTA LÍNEA
         if (currentIndex >= palabrasFiltradas.length && palabrasFiltradas.length > 0) currentIndex = palabrasFiltradas.length - 1;
         else if (palabrasFiltradas.length === 0) currentIndex = 0;
         updateFlashcard(); searchDictionary();
@@ -581,5 +797,6 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
         showPanel(btn.dataset.mode);
     };
 });
+
 
 loadData();

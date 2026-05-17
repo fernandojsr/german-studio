@@ -6,8 +6,44 @@
     <title>🇩🇪 German Studio - Learn German</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 (iconos modernos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Chart.js para gráficos circulares -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+
+<!-- Modal de bienvenida -->
+<div id="welcomeModal" class="welcome-modal">
+    <div class="welcome-modal-content">
+        <div class="welcome-flag">
+    <svg width="48" height="48" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+        <rect width="60" height="40" fill="#000000"/>
+        <rect y="13.33" width="60" height="13.33" fill="#FF0000"/>
+        <rect y="26.66" width="60" height="13.33" fill="#FFCC00"/>
+    </svg>
+</div>
+        <h2>Welcome to <span>German Studio</span></h2>
+       <h3>Let's start learning German!</h3>
+        <p>Select a topic to get started</p>
+        <div class="welcome-features">
+            <div class="welcome-feature">
+                <i class="fas fa-layer-group"></i>
+                <span>2000+ words</span>
+            </div>
+            <div class="welcome-feature">
+                <i class="fas fa-gamepad"></i>
+                <span>Interactive games</span>
+            </div>
+            <div class="welcome-feature">
+                <i class="fas fa-headphones"></i>
+                <span>Audio pronunciation</span>
+            </div>
+        </div>
+        <button id="closeWelcomeBtn" class="welcome-btn">Start Learning →</button>
+    </div>
+</div>
+
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -31,6 +67,16 @@
                 </div>
             </div>
             
+<!-- Gráfico circular de progreso -->
+<div class="chart-container">
+    <canvas id="progressChart" width="180" height="180"></canvas>
+    <div class="chart-label">
+        <span id="chartPercentage">0</span>
+        <span>%</span>
+        <small>overall progress</small>
+    </div>
+</div>
+
             <div class="topic-filter">
                 <h3>Topics</h3>
                 <div class="search-box">
@@ -38,34 +84,26 @@
                 </div>
                 <div class="topic-list" id="topicList"></div>
             </div>
-            
-            <div class="progress-section">
-                <h3>Progress</h3>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <span id="progressPercent">0%</span>
-            </div>
-        </aside>
+              </aside>
         
         <!-- Main Content -->
         <main class="main-content">
             <!-- Action buttons -->
             <div class="action-buttons">
-                <button id="showGamesMenuBtn" class="games-menu-btn">🎮 Games</button>
-                <button id="showTravelModeBtn" class="travel-mode-btn">✈️ Travel Mode</button>
-                <button id="showCsvEditorBtn" class="editor-btn">📝 CSV Editor</button>
-                <button id="shareProgressBtn" class="share-btn">📤 Share progress</button>
-                <button id="showAddWordBtn" class="add-word-btn">➕ Add word</button>
-                <button id="exportCsvBtn" class="export-btn">📥 Export to CSV</button>
-                <button id="saveToFileBtn" class="save-file-btn">💾 Save changes</button>
+                <button id="showGamesMenuBtn" class="games-menu-btn"><i class="fas fa-gamepad"></i> Games</button>
+                <button id="showTravelModeBtn" class="travel-mode-btn"><i class="fas fa-plane"></i> Travel Mode</button>
+                <button id="showCsvEditorBtn" class="editor-btn"><i class="fas fa-table"></i> CSV Editor</button>
+                <button id="shareProgressBtn" class="share-btn"><i class="fas fa-share-alt"></i> Share progress</button>
+                <button id="showAddWordBtn" class="add-word-btn"><i class="fas fa-plus-circle"></i> Add word</button>
+                <button id="exportCsvBtn" class="export-btn"><i class="fas fa-download"></i> Export to CSV</button>
+                <button id="saveToFileBtn" class="save-file-btn"><i class="fas fa-save"></i> Save changes</button>
             </div>
             
             <!-- Mode selector -->
             <div class="mode-selector">
-                <button class="mode-btn active" data-mode="study">📚 Study</button>
-                <button class="mode-btn" data-mode="quiz">✏️ Practice</button>
-                <button class="mode-btn" data-mode="dictionary">📖 Dictionary</button>
+                <button class="mode-btn active" data-mode="study"><i class="fas fa-book-open"></i> Study</button>
+                <button class="mode-btn" data-mode="quiz"><i class="fas fa-pen-alt"></i> Practice</button>
+                <button class="mode-btn" data-mode="dictionary"><i class="fas fa-search"></i> Dictionary</button>
             </div>
             
             <!-- Dynamic content container -->
@@ -79,7 +117,7 @@
                                     <span class="card-topic" id="cardTopic"></span>
                                     <span class="card-article" id="cardArticle"></span>
                                     <div class="card-word" id="cardWord"></div>
-                                    <div class="card-hint" id="cardHint">🖱️ Click to see the answer</div>
+                                    <div class="card-hint" id="cardHint"><i class="fas fa-hand-point-right"></i> Click to see the answer</div>
                                 </div>
                                 <div class="card-back">
                                     <span class="card-topic" id="backTopic"></span>
@@ -92,24 +130,24 @@
                                     <div class="card-femenino-container" id="cardFemeninoContainer" style="display: none;">
                                         <div class="card-femenino" id="cardFemenino"></div>
                                     </div>
-                                    <div class="card-hint">🖱️ Click to go back</div>
+                                    <div class="card-hint"><i class="fas fa-hand-point-left"></i> Click to go back</div>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="card-controls">
-                            <button class="nav-btn" id="prevCard">◀ Previous</button>
+                            <button class="nav-btn" id="prevCard"><i class="fas fa-chevron-left"></i> Previous</button>
                             <div class="difficulty-buttons">
-                                <button class="diff-btn hard" id="hardBtn">❌ Hard</button>
-                                <button class="diff-btn medium" id="mediumBtn">🔄 Repeat</button>
-                                <button class="diff-btn easy" id="easyBtn">✅ Easy</button>
+                                <button class="diff-btn hard" id="hardBtn"><i class="fas fa-times-circle"></i> Hard</button>
+                                <button class="diff-btn medium" id="mediumBtn"><i class="fas fa-sync-alt"></i> Repeat</button>
+                                <button class="diff-btn easy" id="easyBtn"><i class="fas fa-check-circle"></i> Easy</button>
                             </div>
-                            <button class="nav-btn" id="nextCard">Next ▶</button>
+                            <button class="nav-btn" id="nextCard">Next <i class="fas fa-chevron-right"></i></button>
                         </div>
                         
                         <div class="card-info">
-                            <span id="cardCounter"></span>
-                            <button id="shuffleBtn" class="shuffle-btn">🎲 Shuffle</button>
+                            <span id="cardCounter"><i class="far fa-credit-card"></i> 0 / 0</span>
+                            <button id="shuffleBtn" class="shuffle-btn"><i class="fas fa-random"></i> Shuffle</button>
                         </div>
                     </div>
                 </div>
@@ -123,7 +161,7 @@
                         </div>
                         <div class="quiz-question" id="quizQuestion"></div>
                         <div class="quiz-options" id="quizOptions"></div>
-                        <button class="quiz-next" id="quizNext" style="display: none;">Next →</button>
+                        <button class="quiz-next" id="quizNext" style="display: none;">Next <i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
 
@@ -143,12 +181,12 @@
                 <!-- Games Panel -->
                 <div id="gamesPanel" class="content-panel">
                     <div class="panel-header">
-                        <h3>🎮 Games</h3>
-                        <button id="closeGamesPanel" class="close-panel-btn">✖️ Close</button>
+                        <h3><i class="fas fa-gamepad"></i> Games</h3>
+                        <button id="closeGamesPanel" class="close-panel-btn"><i class="fas fa-times"></i> Close</button>
                     </div>
                     <div class="games-tabs">
-                        <button class="game-tab active" data-game="hangman">🔤 Hangman</button>
-                        <button class="game-tab" data-game="wordsearch">🔍 Word Search</button>
+                        <button class="game-tab active" data-game="hangman"><i class="fas fa-user-graduate"></i> Hangman</button>
+                        <button class="game-tab" data-game="wordsearch"><i class="fas fa-th"></i> Word Search</button>
                     </div>
                     
                     <div id="hangmanGame" class="game-content active">
@@ -169,34 +207,44 @@
                                 <div id="hangmanWrongLetters" class="hangman-wrong-letters"></div>
                                 <div class="hangman-letters" id="hangmanLetters"></div>
                                 <div class="hangman-message" id="hangmanMessage"></div>
-                                <button id="newHangmanGame" class="game-btn">🎲 New word</button>
+                                <button id="newHangmanGame" class="game-btn"><i class="fas fa-dice"></i> New word</button>
                             </div>
                         </div>
                     </div>
                     
-                    <div id="wordsearchGame" class="game-content" style="display: none;">
-                        <div class="wordsearch-container">
-                            <div id="wordsearchGrid" class="wordsearch-grid"></div>
-                            <div class="wordsearch-words" id="wordsearchWords"></div>
-                            <button id="newWordsearch" class="game-btn">🎲 New puzzle</button>
-                            <div id="wordsearchMessage" class="wordsearch-message"></div>
-                        </div>
-                    </div>
+                  <div id="wordsearchGame" class="game-content" style="display: none;">
+    <div class="wordsearch-container">
+        <!-- Primera línea: Título -->
+        <div class="wordsearch-title">
+            <h4><i class="fas fa-search"></i> Words to find:</h4>
+        </div>
+        <!-- Segunda línea: Palabras -->
+        <div class="wordsearch-words" id="wordsearchWords"></div>
+        <!-- Tercera línea: Botón -->
+        <div class="wordsearch-button">
+            <button id="newWordsearch" class="game-btn"><i class="fas fa-dice-d6"></i> New puzzle</button>
+        </div>
+        <!-- Cuarta línea: Cuadrícula -->
+        <div id="wordsearchGrid" class="wordsearch-grid"></div>
+        <!-- Quinta línea: Mensajes -->
+        <div id="wordsearchMessage" class="wordsearch-message"></div>
+    </div>
+</div>
                 </div>
 
                 <!-- Travel Mode Panel -->
                 <div id="travelModePanel" class="content-panel">
                     <div class="panel-header">
-                        <h3>✈️ Travel Mode</h3>
-                        <button id="closeTravelPanel" class="close-panel-btn">✖️ Close</button>
+                        <h3><i class="fas fa-plane"></i> Travel Mode</h3>
+                        <button id="closeTravelPanel" class="close-panel-btn"><i class="fas fa-times"></i> Close</button>
                     </div>
                     <div class="scenario-buttons">
-                        <button class="scenario-btn" data-scenario="restaurant">🍽️ Restaurant</button>
-                        <button class="scenario-btn" data-scenario="airport">✈️ Airport</button>
-                        <button class="scenario-btn" data-scenario="hotel">🏨 Hotel</button>
-                        <button class="scenario-btn" data-scenario="shopping">🛍️ Shopping</button>
-                        <button class="scenario-btn" data-scenario="directions">🗺️ Directions</button>
-                        <button class="scenario-btn" data-scenario="emergency">🚨 Emergency</button>
+                        <button class="scenario-btn" data-scenario="restaurant"><i class="fas fa-utensils"></i> Restaurant</button>
+                        <button class="scenario-btn" data-scenario="airport"><i class="fas fa-fan"></i> Airport</button>
+                        <button class="scenario-btn" data-scenario="hotel"><i class="fas fa-bed"></i> Hotel</button>
+                        <button class="scenario-btn" data-scenario="shopping"><i class="fas fa-shopping-bag"></i> Shopping</button>
+                        <button class="scenario-btn" data-scenario="directions"><i class="fas fa-map-marker-alt"></i> Directions</button>
+                        <button class="scenario-btn" data-scenario="emergency"><i class="fas fa-ambulance"></i> Emergency</button>
                     </div>
                     <div id="travelWordsContainer" class="travel-words-container"></div>
                 </div>
@@ -204,12 +252,12 @@
                 <!-- CSV Editor Panel -->
                 <div id="csvEditorPanel" class="content-panel">
                     <div class="panel-header">
-                        <h3>📝 CSV Editor</h3>
-                        <button id="closeEditorPanel" class="close-panel-btn">✖️ Close</button>
+                        <h3><i class="fas fa-table"></i> CSV Editor</h3>
+                        <button id="closeEditorPanel" class="close-panel-btn"><i class="fas fa-times"></i> Close</button>
                     </div>
                     <div class="editor-toolbar">
                         <input type="text" id="editorSearch" placeholder="🔍 Search word...">
-                        <button id="saveCsvChanges" class="save-edit-btn">💾 Save changes</button>
+                        <button id="saveCsvChanges" class="save-edit-btn"><i class="fas fa-save"></i> Save changes</button>
                     </div>
                     <div id="csvEditorTable" class="editor-table-wrapper"></div>
                 </div>
@@ -219,14 +267,14 @@
 
     <!-- Add Word Form -->
     <div id="addWordForm" class="add-word-form" style="display: none;">
-        <h3>➕ Add new word</h3>
+        <h3><i class="fas fa-plus-circle"></i> Add new word</h3>
         <div class="form-grid">
             <div class="form-group">
-                <label>German word *</label>
+                <label><i class="fas fa-language"></i> German word *</label>
                 <input type="text" id="newAleman" placeholder="Ex: der Hund">
             </div>
             <div class="form-group">
-                <label>Article</label>
+                <label><i class="fas fa-tag"></i> Article</label>
                 <select id="newArticulo">
                     <option value="">-- Select --</option>
                     <option value="der">der (masculine)</option>
@@ -238,34 +286,34 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Translation *</label>
+                <label><i class="fas fa-exchange-alt"></i> Translation *</label>
                 <input type="text" id="newTraduccion" placeholder="Ex: dog">
             </div>
             <div class="form-group">
-                <label>Topic</label>
+                <label><i class="fas fa-folder"></i> Topic</label>
                 <input type="text" id="newTema" placeholder="Ex: Animals" list="temaList">
                 <datalist id="temaList"></datalist>
             </div>
             <div class="form-group">
-                <label>German example</label>
+                <label><i class="fas fa-quote-left"></i> German example</label>
                 <input type="text" id="newEjemplo" placeholder="Ex: Der Hund bellt laut.">
             </div>
             <div class="form-group">
-                <label>English example</label>
+                <label><i class="fas fa-quote-right"></i> English example</label>
                 <input type="text" id="newEjemploIngles" placeholder="Ex: The dog barks loudly.">
             </div>
             <div class="form-group">
-                <label>Plural</label>
+                <label><i class="fas fa-layer-group"></i> Plural</label>
                 <input type="text" id="newPlural" placeholder="Ex: Hunde">
             </div>
             <div class="form-group">
-                <label>Feminine</label>
+                <label><i class="fas fa-venus"></i> Feminine</label>
                 <input type="text" id="newFemenino" placeholder="Ex: Hündin">
             </div>
         </div>
         <div class="form-buttons">
-            <button id="saveWordBtn" class="save-btn">💾 Save word</button>
-            <button id="cancelAddWordBtn" class="cancel-btn">❌ Cancel</button>
+            <button id="saveWordBtn" class="save-btn"><i class="fas fa-save"></i> Save word</button>
+            <button id="cancelAddWordBtn" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
         </div>
         <div id="formMessage" class="form-message"></div>
     </div>
