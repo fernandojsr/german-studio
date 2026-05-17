@@ -105,7 +105,7 @@ window.addEventListener('DOMContentLoaded', () => {
 async function loadData() {
     console.log('🔄 Loading data...');
     try {
-        const response = await fetch('./datos/german words.csv');
+        const response = await fetch('../datos/german words.csv');
         if (!response.ok) throw new Error('CSV not found');
         const csvText = await response.text();
         palabras = parseCSV(csvText);
@@ -798,5 +798,37 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     };
 });
 
+// ========== MENÚ MÓVIL ==========
+function initMobileMenu() {
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+        
+        // Cerrar menú al hacer clic en un enlace
+        document.querySelectorAll('.topic-item, .mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        });
+        
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+    }
+}
+
+// Llamar a la función después de cargar
+window.addEventListener('DOMContentLoaded', initMobileMenu);
 
 loadData();
