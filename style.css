@@ -1497,6 +1497,31 @@ body.modal-open .app-container {
 }
 
 /* ========== RESPONSIVE MEJORADO PARA MÓVIL ========== */
+
+/* Botón de menú hamburguesa - visible solo en móvil */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 150;
+    background: var(--primary);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+}
+
+.menu-toggle:hover {
+    background: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+/* Pantallas pequeñas (móviles) */
 @media (max-width: 768px) {
     /* Sidebar oculta por defecto */
     .sidebar {
@@ -1511,22 +1536,9 @@ body.modal-open .app-container {
         transform: translateX(0);
     }
     
-    /* Botón para abrir sidebar (agregar en HTML) */
+    /* Mostrar botón de menú en móvil */
     .menu-toggle {
         display: block;
-        position: fixed;
-        top: 1rem;
-        left: 1rem;
-        z-index: 150;
-        background: var(--primary);
-        border: none;
-        border-radius: 50%;
-        width: 44px;
-        height: 44px;
-        color: white;
-        font-size: 1.2rem;
-        cursor: pointer;
-        box-shadow: var(--shadow-md);
     }
     
     .main-content {
@@ -1560,11 +1572,11 @@ body.modal-open .app-container {
         left: 0.5rem;
     }
     
-    /* Botones de acción en fila (se envuelven) */
+    /* Botones de acción */
     .action-buttons {
         justify-content: center;
         gap: 0.4rem;
-        margin-top: 3rem; /* Espacio para el botón de menú */
+        margin-top: 3rem;
     }
     
     .add-word-btn, .export-btn, .save-file-btn,
@@ -1658,8 +1670,9 @@ body.modal-open .app-container {
         padding: 1.5rem;
     }
     
-    .welcome-flag {
-        font-size: 2.5rem;
+    .welcome-flag svg {
+        width: 36px;
+        height: 24px;
     }
     
     .welcome-german, .welcome-studio {
@@ -1687,6 +1700,7 @@ body.modal-open .app-container {
     }
 }
 
+/* Pantallas muy pequeñas */
 @media (max-width: 480px) {
     .travel-words-grid {
         grid-template-columns: 1fr;
@@ -1731,5 +1745,17 @@ body.modal-open .app-container {
     
     .stat-label {
         font-size: 0.5rem;
+    }
+}
+
+/* Pantallas grandes (escritorio) - sidebar siempre visible */
+@media (min-width: 769px) {
+    .menu-toggle {
+        display: none;
+    }
+    
+    .sidebar {
+        transform: translateX(0) !important;
+        position: fixed;
     }
 }
